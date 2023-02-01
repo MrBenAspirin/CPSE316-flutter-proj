@@ -1,33 +1,30 @@
 import 'package:NewsApp/model/article_model.dart';
-import 'package:NewsApp/screens/articles_details_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-Widget customListTile(Article article, BuildContext context) {
-  return Theme(
-    data: Theme.of(context).brightness == Brightness.light
-        ? ThemeData.light()
-        : ThemeData.dark(),
-    child: InkWell(
-      onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => ArticlePage(
-                      article: article,
-                    )));
-      },
-      child: Container(
-        margin: EdgeInsets.all(12.0),
-        padding: EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-            color: Theme.of(context).highlightColor,
-            borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 3.0,
-              ),
-            ]),
+class ArticlePage extends StatelessWidget {
+  final Article article;
+
+  ArticlePage({this.article});
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(article.url);
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    )) {
+      throw "Can not launch url";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(article.title),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,15 +60,22 @@ Widget customListTile(Article article, BuildContext context) {
               height: 8.0,
             ),
             Text(
-              article.title,
+              article.description,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16.0,
               ),
-            )
+            ),
+            SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                _launchURL(article.url);
+              },
+              child: const Text("Read more in browser..."),
+            ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }

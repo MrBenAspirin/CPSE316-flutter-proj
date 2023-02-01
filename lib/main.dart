@@ -1,8 +1,10 @@
-import 'package:NewsApp/services/api_service.dart';
+import 'dart:core';
+import 'package:NewsApp/screens/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'components/customListTile.dart';
+import 'components/newsfeedListTile.dart';
 import 'model/article_model.dart';
+import 'services/networking.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomePage(),
+      home: SplashScreen(),
     );
   }
 }
@@ -24,15 +26,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  ApiService client = ApiService();
-  String search;
+  Networking network = Networking();
+  String search, apiKey;
 
   bool isDarkMode = false;
+
+  DateTime startTime;
 
   void toggleDarkMode() {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    startTime = DateTime.now();
   }
 
   @override
@@ -42,7 +52,12 @@ class _HomePageState extends State<HomePage> {
         theme: theme,
         home: Scaffold(
           appBar: AppBar(
-            title: Text("New News", style: TextStyle(color: Colors.white)),
+            title: Image.asset(
+            'asset/image/newsicon.png',
+            fit: BoxFit.contain,
+            height: 20,
+            alignment: FractionalOffset.center,
+          ),
             backgroundColor: theme.primaryColor,
             actions: [
               IconButton(
@@ -94,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               ),
               Expanded(
                 child: FutureBuilder(
-                  future: client.getArticle(search),
+                  future: network.getArticle(search),
                   builder: (BuildContext context,
                       AsyncSnapshot<List<Article>> snapshot) {
                     if (snapshot.hasData) {
@@ -102,8 +117,10 @@ class _HomePageState extends State<HomePage> {
                       return ListView.builder(
                         itemCount: articles.length,
                         itemBuilder: (context, index) =>
-                            customListTile(articles[index], context),
+                            newsfeedListTile(articles[index], context),
                       );
+                    } else if (snapshot.hasError) {
+                      return StatusCodeDisplay(statCode: network.statCode);
                     }
                     return SpinKitFadingCube(
                       itemBuilder: (BuildContext context, int index) {
@@ -116,6 +133,21 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
+              ),
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Read time: ${DateTime.now().difference(startTime).inMinutes} mins',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
